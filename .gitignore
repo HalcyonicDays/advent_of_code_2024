@@ -8,5 +8,5 @@ temp/
 **/scratchpad.rb
 
 # ignore datasets
- **/.csv
- *.csv
+**/.csv
+*.csv
