@@ -9,5 +9,4 @@ temp/
 
 # ignore datasets
  **/.csv
-
-
+ *.csv
