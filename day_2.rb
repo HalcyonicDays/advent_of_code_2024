@@ -35,9 +35,8 @@ Algorithm:
       previous (n - 1) element.
     - include guard clause to avoid reports that are just 1 level
       since report[1] = nil will throw an erorr otherwise
-- Assign a true/false for safety
+- Boolean helper methods will return true/false for safety
 - count & return the number of safe rows
-
 
 Problem Dampener - Additional information
 - A report is also considered safe if a level can be removed,
@@ -51,8 +50,14 @@ Algorithm Update:
 - Add an additional "or problem_dampened?" helper method logic check
   - this method will systematically remove one level at a time (with 
     replacement) until the report passes
-  - passing criteria will be identical to previous attempts, so those
-    methods will be reused
+  - outer loop responsible for determine which element (index position) is
+    exlcuded from subset of report
+  - inner loop reponsible for populate "limited report" with subset of full report
+  - after subset is created, outer loop is responsible for testing subset for safety
+    - if any version of the subset is considered safe, the problem_dampened method
+      can return true and doesn't need to continue testing subsets for that report
+- passing criteria will be identical to previous attempts, so those
+  methods will be reused
 =end
 
 require 'csv'
