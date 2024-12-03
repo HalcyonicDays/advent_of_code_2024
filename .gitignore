@@ -10,3 +10,4 @@ temp/
 # ignore datasets
 **/.csv
 *.csv
+*input*
