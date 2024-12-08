@@ -24,9 +24,10 @@ def recursive_review(value, operands)
     return result if result
   end
 
-  lookback = current_operand.to_s.size
-  if value.to_s[-lookback..-1] == current_operand.to_s
-    new_value = value.to_s[0...-lookback].to_i
+  # Added for Part 2
+  lookback = current_operand.to_s.size * -1
+  if value.to_s[lookback..-1] == current_operand.to_s
+    new_value = value.to_s[0...lookback].to_i
     result = recursive_review(new_value, new_operands)
     return result if result
   end
