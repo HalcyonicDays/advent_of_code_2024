@@ -77,6 +77,7 @@ free block which will accomodate it.
     - a free block is defined as any block with an odd-numbered index
     - new_index == found index (free block) || or current index (no free block found)
   - if a sufficiently large free block is found:
+
     - create an entry in moved_filed hash - key is the free block index 
       - check if key exists - if so, create empty array; otherwise add to existing one
         - add <amount> copies of current_position(<tail>)/2 into array at moved_files[new_index]
@@ -93,10 +94,24 @@ free block which will accomodate it.
 - the resulting array can be flattened and then summed up
 
 =end
-# .map do |key, values|
-#   values.map { |value| value * key }
-# end
-# p hsh.flatten
+
+# Part 1
+def arbitrary_compact(disk_map)
+  compacted = []
+  tail = -1
+
+  disk_map.each_with_index do |amount, id|
+    if id.even?
+      amount.times { compacted << (id / 2) }
+    else
+      tail, sequence = pull_from_the_back(disk_map, amount, tail)
+      sequence.each { |seq_id| compacted << (seq_id / 2) }
+    end
+    disk_map[id] = 0
+  end
+
+  compacted
+end
 
 def pull_from_the_back(disk_map, amount, tail)
   sequence = []
@@ -120,27 +135,57 @@ def current_position(tail)
   MAX_TAIL + tail + 1
 end
 
+# Part 2
+def even_compact(disk_map)
+  evenly_compacted = {}
+  tail = -1
+
+  while disk_map[tail]
+    file_size = disk_map[tail]
+    found_size, found_index = disk_map.each_with_index.find do |block_size, idx|
+      block_size >= file_size && idx.odd?
+    end
+
+    new_index = found_index || (MAX_TAIL + tail)
+    evenly_compacted[new_index] ||= []
+    file_size.times { evenly_compacted[new_index] << ((MAX_TAIL + tail) / 2) }
+
+    disk_map[new_index] -= file_size
+    tail -= 2
+  end  
+
+  disk_map.each_with_index do |amount, idx|
+    next if amount.zero?
+
+    evenly_compacted[idx] ||= []
+    amount.times { evenly_compacted[idx] << 0 }
+  end
+
+  evenly_compacted
+end
+
+def unpack_compact(evenly_compacted)
+  unpacked = []
+  evenly_compacted.sort.each do |_idx, file_ids|
+    file_ids.each { |id| unpacked << id }
+  end
+
+  unpacked.each_with_index.map { |id, idx| id * idx }
+end
+
 disk_map = []
 INPUT = './day_9_input.txt'
-File.open(INPUT, "r").each_line { |row| disk_map << row }
+File.open(INPUT, "r").each_line { |row| disk_map << row.gsub("\n", "") }
 
 disk_map = disk_map.first.chars.map(&:to_i)
 MAX_TAIL = disk_map.size
 
-compacted = []
-free_blocks = 0
-tail = -1
+# Part 1
+# arbitrarily_compacted = arbitrary_compact(disk_map)
+# checksum = arbitrarily_compacted.each_with_index.map { |id, idx| id * idx }
+# p checksum.reduce(:+)
 
-disk_map.each_with_index do |amount, id|
-  if id.even?
-    amount.times { compacted << (id / 2) }
-  else
-    tail, sequence = pull_from_the_back(disk_map, amount, tail)
-    sequence.each { |seq_id| compacted << (seq_id / 2) }
-  end
-  disk_map[id] = 0
-end
-
-checksum = compacted.each_with_index.map { |id, idx| id * idx }
-p checksum.reduce(:+)
-
+# Part 2
+evenly_compacted = even_compact(disk_map)
+checksums = unpack_compact(evenly_compacted)
+p checksums.reduce(:+)
