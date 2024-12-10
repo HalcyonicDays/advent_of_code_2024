@@ -143,7 +143,7 @@ def even_compact(disk_map)
   while disk_map[tail]
     file_size = disk_map[tail]
     found_size, found_index = disk_map.each_with_index.find do |block_size, idx|
-      block_size >= file_size && idx.odd?
+      block_size >= file_size && idx.odd? && idx < (MAX_TAIL + tail)
     end
 
     new_index = found_index || (MAX_TAIL + tail)
@@ -189,3 +189,7 @@ MAX_TAIL = disk_map.size
 evenly_compacted = even_compact(disk_map)
 checksums = unpack_compact(evenly_compacted)
 p checksums.reduce(:+)
+# 3696437322850 too low
+# 5443124365847 too low
+# 5450388097436 not right
+# 8800549860065 too high
