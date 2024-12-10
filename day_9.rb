@@ -65,7 +65,38 @@ counts  &  IDs        Counts (1-n); IDs (0-10,000)
   - map across each element, multiplying value * position
     - use [].each_with_index.map 
   - checksum.reduce(:+)
+
+Part 2:
+Starting from the end of the disk map, select a chunk of data and then move it into the earliest possible
+free block which will accomodate it.
+- initialize empty hash moved_files
+- initialize <tail> at -1
+- create a loop that starts at element disk_map[tail]
+  - the value at that index is minimum amount of free space needed
+  - starting at the beginning of disk_map, find the first instance for free space that is >= value @ tail
+    - a free block is defined as any block with an odd-numbered index
+    - new_index == found index (free block) || or current index (no free block found)
+  - if a sufficiently large free block is found:
+    - create an entry in moved_filed hash - key is the free block index 
+      - check if key exists - if so, create empty array; otherwise add to existing one
+        - add <amount> copies of current_position(<tail>)/2 into array at moved_files[new_index]
+    - subtract amount from value at new_index.
+    - subtract amount from value @ <tail> (or set it to zero directly)
+  - if no free block is found, then the file does not get a new index
+    - add <amount> copies of current_position(<tail>)/2 into array at moved_files[new_index]
+  - <tail> -= 2
+  - break unless disk_map[<tail>] (break once loop is out of bounds of array)
+- After a certain point, no more free blocks will be found and all remaining file blocks will be written
+  into the moved_files hash at their current index (since there are no free blocks to accomodate them)
+- It is worth confirming that the values of the moved_files array contains only even numbers
+- mapping across the hash & then across the values to multiply key * value (and divide by 2)
+- the resulting array can be flattened and then summed up
+
 =end
+# .map do |key, values|
+#   values.map { |value| value * key }
+# end
+# p hsh.flatten
 
 def pull_from_the_back(disk_map, amount, tail)
   sequence = []
