@@ -14,10 +14,9 @@ Implicit Rules:
 - Stone seems to be irrelevant (at least for Part 1)
   - But the story is so explicitly stating "order is preserved!"
   - Perhaps it's relevant for Part 2
+  - It was not relevant for Part 2 -_-
 
-Data Structure: Linked-List
-- Since elements will be constantly splitting, this is the most efficient
-  way to preserve the order of the list.  I hope this is rewarded in Part 2...
+Data Structure: Recursive count
 
 Algorithm:
 - Create a LinkedStone class
@@ -30,12 +29,13 @@ Algorithm:
   - for the Stone at HEAD, update the value of "next_node" to newly-created Stone
   - update the value of HEAD to newly-created Stone
 
-- Research linked list creation in ruby
+Algorithm:
+- In general, loop through each stone and perform an action based on the value
+- if the value is not a single-digit number follow the standard rules:
+  - split if the number of digits is even,
+  - or multiply by 2024 if the number of digits is odd
+- if the value IS a single-digit number
 
-
-NEVERMIND
-Input:  stone (value)
-Output: value or array of values (if split)
 
 =end
 
@@ -67,4 +67,46 @@ def blink(stones, blinks)
   stones
 end
 
-p blink(initial_contiditions, 5).size
+SPLIT_COUNTS = {0 => [1]}
+def build_split_math
+  1.upto(9) do |single_digit|
+    SPLIT_COUNTS[single_digit] = []
+    stones = [single_digit * 2024]
+
+    while stones.any? { |stone| stone > 9 }
+      SPLIT_COUNTS[single_digit] << stones
+      stones = stones.map do |stone|
+        if stone > 9
+          update_stone(stone)
+        else
+          stone
+        end
+      end
+
+      stones = stones.flatten
+    end
+    SPLIT_COUNTS[single_digit] << stones
+  end
+end
+
+build_split_math
+
+def single_digit_impact(single_digit, remaining_cycles, total_count=1)
+
+  while remaining_cycles > 0
+    idx = [SPLIT_COUNTS[single_digit].size - 1, total_count].min
+    remaining_cycles -= idx
+    total_count = SPLIT_COUNTS[single_digit][idx].size - 1
+
+    SPLIT_COUNTS[single_digit][idx].each do |single| 
+      total_count += single_digit_impact(single_digit, remaining_cycles, total_count)
+    end
+  end
+
+  return total_count
+end
+
+initial_value = 1
+0.upto(2) do |cycles|
+  p [single_digit_impact(initial_value, cycles), blink([1], cycles).size]
+end
