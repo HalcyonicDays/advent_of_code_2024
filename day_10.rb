@@ -24,6 +24,41 @@ SAMPLE_3 = '89010123
 01329801
 10456732'
 
+SAMPLE_4 ='.....0.
+..4321.
+..5..2.
+..6543.
+..7..4.
+..8765.
+..9....'
+
+SAMPLE_5 ='
+..90..9
+...1.98
+...2..7
+6543456
+765.987
+876....
+987....'
+
+SAMPLE_6 = '
+012345
+123456
+234567
+345678
+4.6789
+56789.'
+
+SAMPLE_7 ='
+89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732'
+
 =begin
 Part 1: Calculate the trailhead score for each trail head (and add them all up)
 
@@ -47,14 +82,15 @@ Part 1: Calculate the trailhead score for each trail head (and add them all up)
     for part 2, which is a little excessive, but the nature of these challenges is that I already know there will
     be a part 2, and I don't know what it will require, so there's inherently a little bit of over-engineering
 
-  Part 2: 
 =end
 
-def retrieve_trail_map(source)
+def retrieve_trail_map
   trail_map = []
-  File.open(INPUT, "r").each_line { |row| trail_map << row.gsub("\n", "") }
-  trail_map.map do |row|
-    row.chars.map(&:to_i)
+  File.open(INPUT, "r").each_line { |row| trail_map << row } 
+  trail_map.map do |row| 
+    row.chars.map do |char|
+      char.to_i.to_s == char.to_s ? char.to_i : nil
+    end
   end
 end
 
@@ -111,9 +147,7 @@ def walk_the_path(start, finish)
 
   neighbors = find_valid_neighbors(start)
 
-  neighbors.each do |displacement|
-    neighbor_x, neighbor_y = displacement[0], displacement[1]
-    new_start = [neighbor_x, neighbor_y]
+  neighbors.each do |new_start|
     is_summit = walk_the_path(new_start, finish)
     return true if is_summit
   end
@@ -144,13 +178,26 @@ def valid_position?(x_pos, y_pos)
   MAP[y_pos] && MAP[y_pos][x_pos]
 end
 
+def walk_all_paths(start)
+  local_height = MAP[start[1]][start[0]]
+  $RATINGS += 1 if local_height == SUMMIT
+
+  neighbors = find_valid_neighbors(start)
+  
+  neighbors.each do |neighbor|
+    walk_all_paths(neighbor)
+  end
+end
+
 INPUT = './day_10_input.txt'
 SUMMIT = 9
+MAP = retrieve_trail_map
+# MAP = retrieve_sample_map(SAMPLE_8)
 
-MAP = retrieve_trail_map(INPUT)
+# Part 1
 trailheads = find_all_trailheads
-
 summits = {}
+
 trailheads.each do |trailhead|
   summits[trailhead] = []
   potential_summits = find_nearby_summits(trailhead)
@@ -160,4 +207,9 @@ trailheads.each do |trailhead|
   end
 end
 
-p summits.map { |trailhead, summits| summits.size}.reduce(:+)
+puts "total trails: #{summits.map { |trailhead, summits| summits.size}.reduce(:+)}"
+
+# Part 2
+$RATINGS = 0
+trailheads.each { |trailhead| walk_all_paths(trailhead) }
+p $RATINGS
