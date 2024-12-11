@@ -59,6 +59,8 @@ SAMPLE_7 ='
 01329801
 10456732'
 
+SAMPLE_8 = '' # Puzzle input
+
 =begin
 Part 1: Calculate the trailhead score for each trail head (and add them all up)
 
@@ -86,12 +88,8 @@ Part 1: Calculate the trailhead score for each trail head (and add them all up)
 
 def retrieve_trail_map
   trail_map = []
-  File.open(INPUT, "r").each_line { |row| trail_map << row } 
-  trail_map.map do |row| 
-    row.chars.map do |char|
-      char.to_i.to_s == char.to_s ? char.to_i : nil
-    end
-  end
+  File.open(INPUT, "r").each_line { |row| trail_map << row.gsub(/\D/, '') } 
+  trail_map.map { |row| row.chars.map(&:to_i) }
 end
 
 def retrieve_sample_map(sample_source)
@@ -178,15 +176,17 @@ def valid_position?(x_pos, y_pos)
   MAP[y_pos] && MAP[y_pos][x_pos]
 end
 
-def walk_all_paths(start)
+def walk_all_paths(start, total)
   local_height = MAP[start[1]][start[0]]
-  $RATINGS += 1 if local_height == SUMMIT
+  total += 1 if local_height == SUMMIT
 
   neighbors = find_valid_neighbors(start)
   
   neighbors.each do |neighbor|
-    walk_all_paths(neighbor)
+    total = walk_all_paths(neighbor, total)
   end
+
+  total
 end
 
 INPUT = './day_10_input.txt'
@@ -210,6 +210,6 @@ end
 puts "total trails: #{summits.map { |trailhead, summits| summits.size}.reduce(:+)}"
 
 # Part 2
-$RATINGS = 0
-trailheads.each { |trailhead| walk_all_paths(trailhead) }
-p $RATINGS
+total = 0
+trailheads.each { |trailhead| total = walk_all_paths(trailhead, total) }
+puts "total ratings: #{total}"
