@@ -1,4 +1,4 @@
-initial_contiditions = []
+initial_contiditions = [0, 7, 6618216, 26481, 885, 42, 202642, 8791]
 
 =begin
 Problem: Given some initial starting conditions, apply rules to create new conditions
@@ -37,22 +37,40 @@ Algorithm:
 - if the value IS a single-digit number
   - refer to the SPLIT_COUNTS dictionary which keeps tack of each number's
     progression from itself back to a series of single digits 
+- so there is a recursive algorithm responsible for evaluating a given single digit & number of cycles
+- there also needs to be a process for getting to a single digit given any other number
+  - while <stone> is greater than 9, continue updating it's value per the blink rules
+  - subtract a blink (cycle count) for each blink update
+  - once the value is a single digit, kick it over to the other algorithm along with remaining # of cycles
+  - if cycles hit zero, return 1 for each number
 
+What do we know?
+  - each stone, at every blink, either splits or it doesn't
+    - this means that after each blink, each stone (one at a time) either increases the total count by 1,
+      or it is left unchanged.
+  - once any stone has a single-digit value, the final number of stones after n blinks can be calculated
+    without going through each step since each single-digit number will undergo a known number of splits
+    before being transformed into another single-digit value
+
+    
 
 =end
+def update_from_zero
+  [1]
+end
+
+def twenty_twenty_four(stone)
+  [stone * 2024]
+end
 
 def update_stone(stone)
   if stone.zero?
-    update_from_zero
+    [1]
   elsif stone.to_s.length.even?
     split_stone(stone)
   else
-    stone *= 2024
+    [stone * 2024]
   end
-end
-
-def update_from_zero
-  1
 end
 
 def split_stone(stone)
@@ -60,13 +78,6 @@ def split_stone(stone)
   left_half = stone.to_s[0..(halfway-1)].to_i
   right_half = stone.to_s[halfway..-1].to_i
   [left_half, right_half]
-end
-
-def blink(stones, blinks)
-  blinks.times do
-    stones.map! { |stone| update_stone(stone) }.flatten!
-  end
-  stones
 end
 
 SPLIT_COUNTS = {}
@@ -99,27 +110,70 @@ def handle_single_digits(digit, remaining_cycles, total_count=0)
 
   depth_to_singles = SPLIT_COUNTS[digit].index(SPLIT_COUNTS[digit].last)
   depth = [depth_to_singles, remaining_cycles].min
-
+  
   if remaining_cycles > depth_to_singles
     remaining_cycles -= depth
     split_results = SPLIT_COUNTS[digit][depth]
 
     split_results.each do |single_digit|
-      total_count += handle_single_digits(single_digit, remaining_cycles, total_count)
+      total_count = handle_single_digits(single_digit, remaining_cycles, total_count)
     end
 
   else
     split_results = SPLIT_COUNTS[digit][depth]
-    return split_results.size
+    total_count += split_results.size
   end
 
   return total_count
 end
 
-initial_value = 1
-0.upto(7) do |cycles|
-  # p handle_single_digits(initial_value, cycles) == blink([1], cycles).size
-  puts "cycle #{cycles}: #{[handle_single_digits(initial_value, cycles), blink([1], cycles).size].inspect}"
+def recursive_blinks(value, blinks, count=1)
+  return count if blinks.zero?
+
+  if value.zero?
+    count = recursive_blinks(1, blinks - 1, count)
+  elsif value.to_s.length.even?
+    count += 1
+    split_stone(value).each do |stone|
+      count = recursive_blinks(stone, blinks - 1, count)
+    end
+  else
+    count = recursive_blinks(value * 2024, blinks - 1, count)
+  end
+
+  return count
 end
 
-# p SPLIT_COUNTS
+=begin
+- there also needs to be a process for getting to a single digit given any other number
+  - while <stone> is greater than 9, continue updating it's value per the blink rules
+  - subtract a blink (cycle count) for each blink update
+  - once the value is a single digit, kick it over to the other algorithm along with remaining # of cycles
+  - if cycles hit zero, return 1 for each number
+=end
+
+total_stones = 0
+
+def get_to_singles(stones, blinks, total_stones=0)
+  return stones.size if blinks.zero?
+
+  stones.each do |stone|
+    if stone <= 9
+      total_stones += handle_single_digits(stone, blinks, total_stones)
+    else
+      new_stones = update_stone(stone)
+      total_stones += get_to_singles(new_stones, blinks - 1, total_stones)
+    end
+  end
+  return total_stones
+end
+
+test_conditions = [125, 17]
+initial_values = [1, 3, 17]
+1.upto(3) do |cycle|
+  p [cycle, 
+     get_to_singles(initial_values, cycle), 
+    # initial_values.map {|value| recursive_blinks(value, cycle)}.reduce(:+), 
+     initial_values.map {|value| recursive_blinks(value, cycle)}.reduce(:+)].inspect
+end
+puts "all done"
