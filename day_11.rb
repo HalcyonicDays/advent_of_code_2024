@@ -95,32 +95,31 @@ end
 build_split_math
 
 def handle_single_digits(digit, remaining_cycles, total_count=0)
-  depth_to_singles = SPLIT_COUNTS[digit].size - 1
-  idx = [depth_to_singles, remaining_cycles].min
-  
-  total_count = SPLIT_COUNTS[digit][idx].size
-  
-  while remaining_cycles > 0
-    idx = [depth_to_singles, remaining_cycles].min
-    remaining_cycles -= idx
+  return total_count if remaining_cycles.zero?
 
-    single_digits = SPLIT_COUNTS[digit][idx].select { |digit| digit <= 9}
-    stragglers = SPLIT_COUNTS[digit][idx].reject { |digit| digit <= 9}
+  depth_to_singles = SPLIT_COUNTS[digit].index(SPLIT_COUNTS[digit].last)
+  depth = [depth_to_singles, remaining_cycles].min
 
-    single_digits.each do |single_digit|
-      puts "this happened"
-      total_count += handle_single_digits(single_digit, remaining_cycles, total_count)-1
+  if remaining_cycles > depth_to_singles
+    remaining_cycles -= depth
+    split_results = SPLIT_COUNTS[digit][depth]
+
+    split_results.each do |single_digit|
+      total_count += handle_single_digits(single_digit, remaining_cycles, total_count)
     end
 
+  else
+    split_results = SPLIT_COUNTS[digit][depth]
+    return split_results.size
   end
 
   return total_count
 end
 
-initial_value = 5
-0.upto(4) do |cycles|
-  p handle_single_digits(initial_value, cycles) == blink([1], cycles).size
-  # p handle_single_digits(initial_value, cycles) - blink([1], cycles).size
+initial_value = 1
+0.upto(7) do |cycles|
+  # p handle_single_digits(initial_value, cycles) == blink([1], cycles).size
+  puts "cycle #{cycles}: #{[handle_single_digits(initial_value, cycles), blink([1], cycles).size].inspect}"
 end
 
 # p SPLIT_COUNTS
