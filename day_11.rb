@@ -1,5 +1,3 @@
-initial_contiditions = [0, 7, 6618216, 26481, 885, 42, 202642, 8791]
-
 =begin
 Problem: Given some initial starting conditions, apply rules to create new conditions
 
@@ -57,6 +55,7 @@ What do we know?
 =end
 def update_from_zero
   [1]
+
 end
 
 def twenty_twenty_four(stone)
@@ -65,11 +64,11 @@ end
 
 def update_stone(stone)
   if stone.zero?
-    [1]
+    update_from_zero
   elsif stone.to_s.length.even?
     split_stone(stone)
   else
-    [stone * 2024]
+    twenty_twenty_four(stone)
   end
 end
 
@@ -102,8 +101,94 @@ def build_split_math
     SPLIT_COUNTS[single_digit] << stones
   end
 end
-
 build_split_math
+$TOTAL_STONES = 0
+
+class SingleDigit
+  attr_reader :value, :children
+  attr_accessor :blinks
+
+  def initialize(value, blinks)
+    @value = value
+    @blinks = blinks
+    @children = get_children(value)
+  end
+
+  def final_children
+    children.last
+  end
+
+  def max_depth
+    children.size - 1
+  end
+
+  def blink
+    if blinks > max_depth
+      $TOTAL_STONES += final_children.size - 1
+      final_children.each do |child| 
+        STONE_QUEUE << SingleDigit.new(child, blinks - max_depth)
+      end  
+    else
+      $TOTAL_STONES += children[blinks].size
+    end
+  end
+
+  def get_children(value)
+    SPLIT_COUNTS[value]
+  end
+end
+
+def get_to_singles(stones, blinks)
+  return stones.size if blinks.zero?
+
+  stones.each do |stone|
+    if stone > 9
+      new_stones = update_stone(stone)
+      $TOTAL_STONES += new_stones.size - 1
+      $TOTAL_STONES += get_to_singles(new_stones, blinks - 1)
+    else
+      STONE_QUEUE << SingleDigit.new(stone, blinks)
+      $TOTAL_STONES -= 1
+    end
+  end
+
+  return 0
+end
+
+STONE_QUEUE = []
+initial_conditions = [0, 7, 42, 6618216, 26481, 885, 202642, 8791]
+test_conditions = [125, 17]
+# test_conditions = [1]#, 2, 3, 4 , 5]
+
+# $TOTAL_STONES += test_conditions.size
+# $TOTAL_STONES += get_to_singles(test_conditions, 5) # => 22
+p $TOTAL_STONES
+
+$TOTAL_STONES += get_to_singles(test_conditions, 75) # => 55,312
+# $TOTAL_STONES += get_to_singles(initial_conditions, 25) # => 213,625
+
+STONE_QUEUE.sort! { |a, b| b.blinks <=> a.blinks }
+puts "queue size: #{STONE_QUEUE.size}"
+# p STONE_QUEUE.map(&:value)
+
+counter = 0
+while STONE_QUEUE.any?
+  stone = STONE_QUEUE.pop
+  stone.blink
+  STONE_QUEUE.sort! { |a, b| b.blinks <=> a.blinks } if (counter % 100).zero?
+  counter += 1
+  puts counter if (counter % 10000).zero?
+end
+
+
+
+# puts "total iterations: #{counter}"
+puts "final result = #{$TOTAL_STONES}"
+
+# p STONE_QUEUE.map(&:blinks).tally
+
+# p STONE_QUEUE.tally { |a| a.blinks }.values
+# p STONE_QUEUE.last.blinks
 
 def handle_single_digits(digit, remaining_cycles, total_count=0)
   return total_count if remaining_cycles.zero?
@@ -151,29 +236,20 @@ end
   - once the value is a single digit, kick it over to the other algorithm along with remaining # of cycles
   - if cycles hit zero, return 1 for each number
 =end
+# 0, 2
+# 1, 3
+# 2, 4
+# 3, 5
+# 4, 9
+# 5, 13
+# 6, 22
+# 25,  55312
 
-total_stones = 0
-
-def get_to_singles(stones, blinks, total_stones=0)
-  return stones.size if blinks.zero?
-
-  stones.each do |stone|
-    if stone <= 9
-      total_stones += handle_single_digits(stone, blinks, total_stones)
-    else
-      new_stones = update_stone(stone)
-      total_stones += get_to_singles(new_stones, blinks - 1, total_stones)
-    end
-  end
-  return total_stones
-end
-
-test_conditions = [125, 17]
-initial_values = [1, 3, 17]
-1.upto(3) do |cycle|
-  p [cycle, 
-     get_to_singles(initial_values, cycle), 
-    # initial_values.map {|value| recursive_blinks(value, cycle)}.reduce(:+), 
-     initial_values.map {|value| recursive_blinks(value, cycle)}.reduce(:+)].inspect
-end
-puts "all done"
+# initial_values = [1, 3, 17]
+# 1.upto(3) do |cycle|
+#   p [cycle, 
+#      get_to_singles(initial_values, cycle), 
+#     # initial_values.map {|value| recursive_blinks(value, cycle)}.reduce(:+), 
+#      initial_values.map {|value| recursive_blinks(value, cycle)}.reduce(:+)].inspect
+# end
+# puts "all done"
