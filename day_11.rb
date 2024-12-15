@@ -1,3 +1,5 @@
+NUMBER_OF_BLINKS = 75
+
 def update_stone(stone)
   if stone.zero?
     update_from_zero
@@ -30,7 +32,7 @@ ITERATIONS = {0 => initial_conditions.tally}
 
 blink = 0
 
-while blink < 75
+while blink < NUMBER_OF_BLINKS
 
   ITERATIONS[blink].each do |stone, count|
     STONE_MEMO.fetch(stone) {STONE_MEMO[stone] = update_stone(stone).tally}.each do |key, value|
@@ -47,4 +49,4 @@ while blink < 75
   blink += 1
 end
 
-p ITERATIONS[75].values.sum
+p ITERATIONS[NUMBER_OF_BLINKS].values.sum
